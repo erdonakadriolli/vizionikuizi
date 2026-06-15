@@ -320,15 +320,18 @@ function loadQuestion() {
   if (currentQ >= QUESTIONS.length) { showResults(); return; }
   answered = false; timeLeft = TIME_PER_Q;
   const q = QUESTIONS[currentQ];
+  // Shuffle answers and track where the correct one lands
+  const indices = shuffle([0, 1, 2, 3]);
+  currentCorrectIdx = indices.indexOf(q.c);
   document.getElementById('q-counter').textContent = `Pyetja ${currentQ+1} / ${QUESTIONS.length}`;
   document.getElementById('progress-fill').style.width = `${(currentQ/QUESTIONS.length)*100}%`;
   document.getElementById('question-text').textContent = q.q;
   const div = document.getElementById('answers');
   div.innerHTML = '';
-  q.a.forEach((ans, i) => {
+  indices.forEach((origIdx, i) => {
     const btn = document.createElement('button');
     btn.className = 'answer-btn';
-    btn.innerHTML = `<span class="answer-label">${LABELS[i]}</span>${ans}`;
+    btn.innerHTML = `<span class="answer-label">${LABELS[i]}</span>${q.a[origIdx]}`;
     btn.onclick = () => selectAnswer(i);
     div.appendChild(btn);
   });
@@ -346,7 +349,7 @@ function tick() {
       answered = true; skipped++;
       const btns = document.querySelectorAll('.answer-btn');
       btns.forEach(b => b.disabled = true);
-      btns[QUESTIONS[currentQ].c].classList.add('correct');
+      btns[currentCorrectIdx].classList.add('correct');
       setTimeout(() => { currentQ++; loadQuestion(); }, 800);
     }
   }
@@ -367,8 +370,8 @@ function selectAnswer(idx) {
   const q = QUESTIONS[currentQ];
   const btns = document.querySelectorAll('.answer-btn');
   btns.forEach(b => b.disabled = true);
-  if (idx === q.c) { btns[idx].classList.add('correct'); score++; }
-  else { btns[idx].classList.add('wrong'); btns[q.c].classList.add('correct'); wrongCount++; }
+  if (idx === currentCorrectIdx) { btns[idx].classList.add('correct'); score++; }
+  else { btns[idx].classList.add('wrong'); btns[currentCorrectIdx].classList.add('correct'); wrongCount++; }
   setTimeout(() => { currentQ++; loadQuestion(); }, 900);
 }
 
