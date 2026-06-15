@@ -272,7 +272,16 @@ const QUESTIONS = [
 const LABELS = ['A','B','C','D'];
 const TIME_PER_Q = 15;
 let userData = {}, currentQ = 0, score = 0, skipped = 0, wrongCount = 0;
-let timer = null, timeLeft = TIME_PER_Q, answered = false;
+let timer = null, timeLeft = TIME_PER_Q, answered = false, currentCorrectIdx = 0;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function show(id) {
   ['screen-reg','screen-quiz','screen-result'].forEach(s =>
