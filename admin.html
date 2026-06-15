@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin – Kuiz Barazia Gjinore</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple: #6C2BD9; --purple-dark: #4A1A9E; --purple-light: #EDE9FF;
+    --pink: #E040FB; --white: #FFFFFF; --gray: #F8F7FF; --text: #1A1033;
+    --muted: #6B7280; --correct: #22C55E; --wrong: #EF4444; --border: #DDD6FE;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1A1033 0%, #2D1B69 50%, #1A1033 100%);
+    min-height: 100vh; color: var(--text);
+  }
+  .login-wrap {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .login-card {
+    background: white; border-radius: 24px; padding: 40px;
+    width: 100%; max-width: 380px; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+  .login-card .icon { font-size: 48px; margin-bottom: 16px; }
+  .login-card h1 { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .login-card input {
+    width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+    border-radius: 12px; font-size: 15px; font-family: 'Inter', sans-serif;
+    outline: none; margin-bottom: 14px; color: var(--text);
+  }
+  .login-card input:focus { border-color: var(--purple); }
+  .btn-primary {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: white; border: none; border-radius: 12px; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .err { color: var(--wrong); font-size: 13px; margin-top: 10px; }
+
+  /* Admin Panel */
+  #admin-panel { display: none; }
+  .topbar {
+    background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar .logo { color: white; font-size: 18px; font-weight: 800; }
+  .topbar .logo span { color: var(--pink); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .badge-count {
+    background: var(--pink); color: white; padding: 4px 12px;
+    border-radius: 20px; font-size: 13px; font-weight: 700;
+  }
+  .btn-logout {
+    background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px; border-radius: 10px; cursor: pointer; font-size: 13px;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+  .main { padding: 32px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 20px; color: white;
+  }
+  .stat-card .label { font-size: 12px; opacity: 0.6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-card .value { font-size: 32px; font-weight: 800; }
+  .stat-card .sub { font-size: 12px; opacity: 0.5; margin-top: 2px; }
+
+  .table-wrap {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; overflow: hidden;
+  }
+  .table-header {
+    padding: 18px 24px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .table-header h2 { color: white; font-size: 16px; font-weight: 700; }
+  .search-box {
+    padding: 9px 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: white; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; width: 220px;
+  }
+  .search-box::placeholder { color: rgba(255,255,255,0.4); }
+  .search-box:focus { border-color: var(--purple); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.45);
+    background: rgba(0,0,0,0.15);
+  }
+  tbody tr { border-top: 1px solid rgba(255,255,255,0.06); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  tbody td { padding: 13px 16px; color: white; font-size: 13px; }
+  .score-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .score-high { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .score-mid { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .score-low { background: rgba(239,68,68,0.15); color: #f87171; }
+  .btn-del {
+    background: rgba(239,68,68,0.15); color: #f87171; border: none;
+    padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-del:hover { background: rgba(239,68,68,0.3); }
+  .empty-state { text-align: center; padding: 60px; color: rgba(255,255,255,0.4); font-size: 15px; }
+  .loading { text-align: center; padding: 60px; color: rgba(255,255,255,0.5); }
+
+  .btn-export {
+    background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 13px;
+    font-family: 'Inter', sans-serif; font-weight: 600;
+  }
+  .btn-export:hover { background: rgba(255,255,255,0.18); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="icon">🔐</div>
+    <h1>Panel Admin</h1>
+    <p>Kuiz – Barazia Gjinore</p>
+    <input type="password" id="pwd-input" placeholder="Fjalëkalimi" onkeydown="if(event.key==='Enter') doLogin()" />
+    <button class="btn-primary" onclick="doLogin()">Hyr në Panel</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel">
+  <div class="topbar">
+    <div class="logo">Kuiz – <span>Barazia Gjinore</span> · Admin</div>
+    <div class="topbar-right">
+      <span class="badge-count" id="total-badge">0 aplikantë</span>
+      <button class="btn-export" onclick="exportCSV()">⬇ Eksporto CSV</button>
+      <button class="btn-logout" onclick="logout()">Dil</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="label">Gjithsej Aplikantë</div>
+        <div class="value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Mesatarja e Pikëve</div>
+        <div class="value" id="stat-avg">—</div>
+        <div class="sub">nga 30 pyetje</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Rezultati Më i Lartë</div>
+        <div class="value" id="stat-max">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Mbi 90%</div>
+        <div class="value" id="stat-top">—</div>
+        <div class="sub">kandidatë të fortë</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <h2>📋 Lista e Aplikantëve</h2>
+        <input class="search-box" id="search-inp" placeholder="🔍 Kërko emër, email..." oninput="filterTable()" />
+      </div>
+      <div id="table-container">
+        <div class="loading">Duke ngarkuar të dhënat...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminPwd = '';
+let allResults = [];
+
+function doLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  if (!pwd) { document.getElementById('login-err').textContent = '⚠️ Shkruaj fjalëkalimin!'; return; }
+  adminPwd = pwd;
+  fetchResults();
+}
+
+function logout() {
+  adminPwd = '';
+  allResults = [];
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+}
+
+async function fetchResults() {
+  try {
+    const res = await fetch('/api/results', {
+      headers: { 'x-admin-password': adminPwd }
+    });
+    if (res.status === 401) {
+      document.getElementById('login-err').textContent = '⚠️ Fjalëkalimi është i gabuar!';
+      return;
+    }
+    allResults = await res.json();
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    renderStats();
+    renderTable(allResults);
+  } catch(e) {
+    document.getElementById('login-err').textContent = '⚠️ Gabim gjatë lidhjes me serverin.';
+  }
+}
+
+function renderStats() {
+  const total = allResults.length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('total-badge').textContent = total + ' aplikantë';
+  if (total === 0) return;
+  const avg = (allResults.reduce((s,r) => s + (r.score||0), 0) / total).toFixed(1);
+  const max = Math.max(...allResults.map(r => r.score||0));
+  const top = allResults.filter(r => (r.percent||0) >= 90).length;
+  document.getElementById('stat-avg').textContent = avg;
+  document.getElementById('stat-max').textContent = max;
+  document.getElementById('stat-top').textContent = top;
+}
+
+function filterTable() {
+  const q = document.getElementById('search-inp').value.toLowerCase();
+  const filtered = allResults.filter(r =>
+    (r.name||'').toLowerCase().includes(q) ||
+    (r.email||'').toLowerCase().includes(q) ||
+    (r.city||'').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(rows) {
+  const container = document.getElementById('table-container');
+  if (rows.length === 0) {
+    container.innerHTML = '<div class="empty-state">📭 Nuk ka aplikantë ende.</div>';
+    return;
+  }
+  const fmtDate = (d) => d ? new Date(d).toLocaleString('sq-AL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+  const scoreClass = (pct) => pct >= 90 ? 'score-high' : pct >= 60 ? 'score-mid' : 'score-low';
+
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Emri</th>
+          <th>Mosha</th>
+          <th>Komuna</th>
+          <th>Email</th>
+          <th>Tel</th>
+          <th>Pikët</th>
+          <th>%</th>
+          <th>Data</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((r, i) => `
+          <tr id="row-${r.id}">
+            <td style="color:rgba(255,255,255,0.3)">${i+1}</td>
+            <td style="font-weight:600">${esc(r.name)}</td>
+            <td>${esc(r.age)||'—'}</td>
+            <td>${esc(r.city)||'—'}</td>
+            <td style="color:rgba(255,255,255,0.6);font-size:12px">${esc(r.email)||'—'}</td>
+            <td style="color:rgba(255,255,255,0.6);font-size:12px">${esc(r.phone)||'—'}</td>
+            <td><span class="score-badge ${scoreClass(r.percent||0)}">${r.score||0}/30</span></td>
+            <td>${r.percent||0}%</td>
+            <td style="color:rgba(255,255,255,0.45);font-size:12px">${fmtDate(r.submitted_at)}</td>
+            <td><button class="btn-del" onclick="deleteRow(${r.id})">🗑</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function deleteRow(id) {
+  if (!confirm('Fshi këtë aplikant?')) return;
+  const res = await fetch('/api/results/' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-password': adminPwd }
+  });
+  if (res.ok) {
+    allResults = allResults.filter(r => r.id !== id);
+    renderStats();
+    renderTable(allResults);
+  }
+}
+
+function exportCSV() {
+  if (!allResults.length) return;
+  const cols = ['id','name','age','city','email','phone','score','wrong_count','skipped','percent','submitted_at'];
+  const header = ['Nr','Emri','Mosha','Komuna','Email','Telefon','Pikët','Gabime','Kaloi','%','Data'].join(',');
+  const rows = allResults.map(r => cols.map(c => `"${(r[c]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'kuiz_rezultate.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

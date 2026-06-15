@@ -393,8 +393,11 @@ function showResults() {
 
   const entry = { ...userData, score, wrongCount, skipped, percent: pct, timestamp: new Date().toISOString() };
   try {
-    const all = JSON.parse(localStorage.getItem('quiz_results')||'[]');
-    all.push(entry); localStorage.setItem('quiz_results', JSON.stringify(all));
+    fetch('/api/results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
   } catch(e){}
   show('screen-result');
 }
