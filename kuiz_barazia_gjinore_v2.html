@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuiz – Barazia Gjinore</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple: #6C2BD9; --purple-dark: #4A1A9E; --purple-light: #EDE9FF;
+    --pink: #E040FB; --white: #FFFFFF; --gray: #F5F3FF; --text: #1A1033;
+    --muted: #6B7280; --correct: #22C55E; --wrong: #EF4444; --border: #DDD6FE;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1A1033 0%, #2D1B69 50%, #1A1033 100%);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; color: var(--text);
+    user-select: none; -webkit-user-select: none; -moz-user-select: none;
+  }
+  .card {
+    background: var(--white); border-radius: 24px; padding: 40px;
+    width: 100%; max-width: 680px; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  }
+  .reg-header { text-align: center; margin-bottom: 28px; }
+  .reg-header .badge {
+    display: inline-block; background: var(--purple-light); color: var(--purple);
+    font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .reg-header h1 { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.2; }
+  .reg-header p { color: var(--muted); margin-top: 6px; font-size: 14px; }
+  .prize-box {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border-radius: 16px; padding: 18px 22px; color: white;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 14px;
+  }
+  .prize-box .icon { font-size: 32px; }
+  .prize-box h3 { font-size: 15px; font-weight: 700; }
+  .prize-box p { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .form-group input {
+    width: 100%; padding: 11px 14px; border: 2px solid var(--border);
+    border-radius: 12px; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s; color: var(--text); background: var(--white);
+  }
+  .form-group input:focus { border-color: var(--purple); }
+  .rules {
+    background: var(--gray); border-radius: 12px; padding: 14px;
+    margin-bottom: 20px; font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .rules strong { color: var(--purple); }
+  .btn-start {
+    width: 100%; padding: 15px; background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+    color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(108,43,217,0.4); font-family: 'Inter', sans-serif;
+  }
+  .btn-start:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(108,43,217,0.5); }
+  .quiz-header { margin-bottom: 20px; }
+  .quiz-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .q-counter { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .timer-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: conic-gradient(var(--purple) 100%, var(--purple-light) 0%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .timer-inner {
+    width: 40px; height: 40px; background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; color: var(--purple);
+  }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--purple), var(--pink));
+    border-radius: 3px; transition: width 0.3s ease;
+  }
+  .question-text {
+    font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.4;
+    margin-bottom: 20px; padding: 18px; background: var(--gray);
+    border-radius: 14px; border-left: 4px solid var(--purple);
+  }
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:500px){ .answers { grid-template-columns: 1fr; } }
+  .answer-btn {
+    padding: 13px 14px; border: 2px solid var(--border); border-radius: 14px;
+    background: white; font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4;
+    font-family: 'Inter', sans-serif;
+  }
+  .answer-btn:hover:not(:disabled) { border-color: var(--purple); background: var(--purple-light); transform: translateY(-1px); }
+  .answer-btn.correct { background: #DCFCE7; border-color: var(--correct); color: #166534; }
+  .answer-btn.wrong { background: #FEE2E2; border-color: var(--wrong); color: #991B1B; }
+  .answer-btn:disabled { cursor: default; }
+  .answer-label {
+    display: inline-block; width: 22px; height: 22px; background: var(--purple-light);
+    color: var(--purple); border-radius: 6px; font-size: 11px; font-weight: 700;
+    text-align: center; line-height: 22px; margin-right: 7px;
+  }
+  .result-header { text-align: center; margin-bottom: 28px; }
+  .score-circle {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin: 0 auto 18px; color: white; box-shadow: 0 8px 30px rgba(108,43,217,0.4);
+  }
+  .score-num { font-size: 34px; font-weight: 800; line-height: 1; }
+  .score-total { font-size: 12px; opacity: 0.8; }
+  .result-header h2 { font-size: 22px; font-weight: 800; }
+  .result-header p { color: var(--muted); margin-top: 5px; font-size: 14px; }
+  .result-details { background: var(--gray); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
+  .result-row {
+    display: flex; justify-content: space-between; padding: 7px 0;
+    border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row span:first-child { color: var(--muted); }
+  .result-row span:last-child { font-weight: 600; }
+  .share-msg {
+    background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+    color: white; border-radius: 14px; padding: 18px; text-align: center;
+    font-size: 14px; line-height: 1.6;
+  }
+  .share-msg strong { font-size: 15px; display: block; margin-bottom: 5px; }
+  .hidden { display: none; }
+  .error-msg { color: var(--wrong); font-size: 13px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Registration -->
+<div class="card" id="screen-reg">
+  <div class="reg-header">
+    <div class="badge">🏆 Konkursi</div>
+    <h1>Kuiz – Barazia Gjinore</h1>
+    <p>30 pyetje · 10 sekonda për pyetje · Shpërblim për fituesin</p>
+  </div>
+  <div class="prize-box">
+    <div class="icon">🎁</div>
+    <div>
+      <h3>Shpërblim për fituesin!</h3>
+      <p>Kush i përgjigjet saktë më shumë pyetjeve fiton çmimin.</p>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Emri dhe Mbiemri *</label>
+      <input type="text" id="inp-name" placeholder="p.sh. Arta Berisha" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Mosha *</label>
+      <input type="number" id="inp-age" placeholder="p.sh. 22" min="10" max="99" autocomplete="off" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Ditëlindja *</label>
+      <input type="date" id="inp-bday" />
+    </div>
+    <div class="form-group">
+      <label>Vendi (Komuna) *</label>
+      <input type="text" id="inp-city" placeholder="p.sh. Prishtinë" autocomplete="off" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="inp-email" placeholder="p.sh. arta@email.com" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Nr. Telefonit *</label>
+      <input type="tel" id="inp-phone" placeholder="p.sh. 044 123 456" autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="rules">
+    <strong>Rregullat:</strong> Pasi të nisësh kuizin, çdo pyetje ka <strong>10 sekonda</strong> kohë.
+    Nëse nuk zgjedh në kohë, pyetja kalon automatikisht. Nuk mund të kthehesh prapa.
+    <strong>Kopjimi i tekstit është i bllokuar.</strong> Rezultati ruhet automatikisht.
+  </div>
+  <div class="error-msg" id="err-msg">⚠️ Ju lutem plotësoni të gjitha fushat saktë!</div>
+  <button class="btn-start" onclick="startQuiz()">Fillo Kuizin →</button>
+</div>
+
+<!-- SCREEN 2: Quiz -->
+<div class="card hidden" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="quiz-meta">
+      <span class="q-counter" id="q-counter">Pyetja 1 / 30</span>
+      <div class="timer-circle" id="timer-circle">
+        <div class="timer-inner" id="timer-num">10</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="question-text" id="question-text"></div>
+  <div class="answers" id="answers"></div>
+</div>
+
+<!-- SCREEN 3: Results -->
+<div class="card hidden" id="screen-result">
+  <div class="result-header">
+    <div class="score-circle">
+      <div class="score-num" id="res-score">0</div>
+      <div class="score-total">nga 30</div>
+    </div>
+    <h2 id="res-title"></h2>
+    <p id="res-subtitle"></p>
+  </div>
+  <div class="result-details">
+    <div class="result-row"><span>👤 Emri</span><span id="res-name"></span></div>
+    <div class="result-row"><span>🎂 Mosha</span><span id="res-age"></span></div>
+    <div class="result-row"><span>📍 Vendi</span><span id="res-city"></span></div>
+    <div class="result-row"><span>📧 Email</span><span id="res-email"></span></div>
+    <div class="result-row"><span>📞 Telefoni</span><span id="res-phone"></span></div>
+    <div class="result-row"><span>✅ Të sakta</span><span id="res-correct"></span></div>
+    <div class="result-row"><span>❌ Të gabuara</span><span id="res-wrong"></span></div>
+    <div class="result-row"><span>⏱️ Pa përgjigje</span><span id="res-skipped"></span></div>
+  </div>
+  <div class="share-msg">
+    <strong>🎉 Faleminderit për pjesëmarrje!</strong>
+    Rezultati yt u regjistrua. Fituesit do të njoftohen nga organizatorët.
+  </div>
+</div>
+
+<script>
+// ── ANTI-COPY PROTECTION ──
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('copy', e => e.preventDefault());
+document.addEventListener('cut', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  // Block Ctrl+C, Ctrl+A, Ctrl+U, Ctrl+S, F12, PrintScreen
+  if (e.ctrlKey && ['c','a','u','s','p'].includes(e.key.toLowerCase())) e.preventDefault();
+  if (e.key === 'F12' || e.key === 'PrintScreen') e.preventDefault();
+  // Block Ctrl+Shift+I (DevTools)
+  if (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+
+const QUESTIONS = [
+  { q: "Cila situatë paraqet një stereotip gjinor?", a: ["Kompania punëson kandidatin më të kualifikuar pavarësisht gjinisë", "Mësuesi supozon se djemtë janë më mirë në matematikë se vajzat", "Shkolla ofron të njëjtat aktivitete për të gjithë nxënësit", "Familja mbështet zgjedhjen e lirë të profesionit"], c: 1 },
+  { q: "Si ndikojnë stereotipet gjinore në zgjedhjen e profesionit?", a: ["Duke inkurajuar eksplorimin e të gjitha mundësive", "Duke kufizuar perceptimet mbi profesionet e përshtatshme për secilën gjini", "Duke eliminuar dallimet në përfaqësim profesional", "Duke siguruar barazi të plotë në tregun e punës"], c: 1 },
+  { q: "Cili është shembull i diskriminimit gjinor indirekt?", a: ["Refuzimi i hapur i kandidatit për shkak të gjinisë", "Rregulli neutral që në praktikë dëmton më shumë një gjini se tjetrën", "Ofrimi i të njëjtit trajnim për të gjithë punonjësit", "Zbatimi i ligjeve kundër diskriminimit"], c: 1 },
+  { q: "Pse stereotipet gjinore vazhdojnë edhe kur ligjet mbështesin barazinë?", a: ["Sepse transmetohen përmes kulturës, mediave dhe socializimit", "Sepse ligjet nuk kanë asnjë ndikim në shoqëri", "Sepse njerëzit lindin me stereotipe gjinore", "Sepse stereotipet janë gjithmonë të sakta"], c: 0 },
+  { q: "Cili veprim do të kontribuonte më shumë në uljen e stereotipeve gjinore në shkollë?", a: ["Ndarja e aktiviteteve sportive sipas gjinisë", "Materiale mësimore me role të ndryshme për të dyja gjinitë", "Caktimi i roleve udhëheqëse vetëm për një gjini", "Kufizimi i zgjedhjeve sipas pritshmërive tradicionale"], c: 1 },
+  { q: "Cila deklaratë pasqyron më mirë konceptin e barazisë gjinore?", a: ["Të gjithë duhet të trajtohen në mënyrë identike në çdo situatë", "Një gjini duhet të ketë përparësi për të korrigjuar pabarazitë historike", "Të gjithë duhet të kenë të drejta dhe mundësi të drejta pavarësisht gjinisë", "Rolet shoqërore duhet të përcaktohen nga gjinia"], c: 2 },
+  { q: "Pse pak vajza zgjedhin lëndët e teknologjisë?", a: ["Vajzat nuk kanë aftësi për teknologji", "Stereotipet ndikojnë në besimin dhe interesin e nxënësve për fusha të caktuara", "Teknologjia është profesion vetëm për meshkuj", "Zgjedhja e lëndëve nuk ndikohet kurrë nga faktorët socialë"], c: 1 },
+  { q: "Cila analizë është e saktë për lidhjen midis stereotipeve dhe diskriminimit?", a: ["Stereotipet gjinore krijojnë paragjykime që çojnë në diskriminim", "Stereotipet dhe diskriminimi janë koncepte krejtësisht të palidhura", "Diskriminimi ndodh vetëm kur ekzistojnë ligje të padrejta", "Stereotipet gjinore kanë vetëm pasoja pozitive"], c: 0 },
+  { q: "Pse stereotipet gjinore konsiderohen të dëmshme për shoqërinë?", a: ["Sepse kufizojnë zgjedhjet, zhvillimin personal dhe mundësitë e individëve", "Sepse ndihmojnë në vlerësimin objektiv të aftësive", "Sepse garantojnë trajtim të barabartë për të gjithë", "Sepse eliminojnë paragjykimet sociale"], c: 0 },
+  { q: "Ku ndikojnë më drejtpërdrejt stereotipet gjinore në mundësitë e individëve?", a: ["Vetëm në sport", "Vetëm në familje", "Në arsim, punësim, media dhe pjesëmarrje shoqërore", "Vetëm në politikë"], c: 2 },
+  { q: "Cila strategji është më efektive për zvogëlimin e stereotipeve gjinore?", a: ["Ruajtja e roleve tradicionale pa diskutim", "Edukimi, mendimi kritik dhe promovimi i mundësive të barabarta", "Kufizimi i profesioneve sipas gjinisë", "Ndarja e aktiviteteve shkollore sipas gjinisë"], c: 1 },
+  { q: "Cili shembull përshkruan më saktë diskriminimin gjinor?", a: ["Ofrimi i të njëjtave mundësi për të gjithë nxënësit", "Vlerësimi i individëve sipas aftësive të tyre", "Refuzimi i kandidatit të kualifikuar për shkak të gjinisë", "Nxitja e bashkëpunimit ndërmjet gjinive"], c: 2 },
+  { q: "Si mund të kontribuojë shkolla në promovimin e barazisë gjinore?", a: ["Duke trajtuar nxënësit sipas stereotipeve tradicionale", "Duke kufizuar pjesëmarrjen sipas gjinisë", "Duke ofruar mundësi të barabarta, respekt dhe përfshirje për të gjithë", "Duke favorizuar grupet me përfaqësim më të madh"], c: 2 },
+  { q: "Cili është pasojë e mundshme afatgjatë e stereotipeve gjinore?", a: ["Rritja e mundësive të barabarta për të gjithë", "Kufizimi i zgjedhjeve arsimore dhe profesionale të individëve", "Eliminimi i diskriminimit në vendin e punës", "Përmirësimi automatik i mirëqenies sociale"], c: 1 },
+  { q: "Cili nen i Kushtetutës së Kosovës garanton barazinë gjinore?", a: ["Neni 7 – Vlerat Kushtetuese", "Neni 24 – Barazia para ligjit", "Neni 53 – Interpretimi i të drejtave të njeriut", "Neni 17 – Zgjedhjet dhe pjesëmarrja"], c: 1 },
+  { q: "Cili institucion është përgjegjës kryesor për barazinë gjinore sipas Ligjit Nr. 05/L-020?", a: ["Ministria e Punës dhe Mirëqenies Sociale", "Agjencia për Barazi Gjinore (ABGj)", "Avokati i Popullit", "Kuvendi i Kosovës"], c: 1 },
+  { q: "Cila është kuota minimale gjinore në pozicionet vendimmarrëse publike?", a: ["30% për secilën gjini", "40% për secilën gjini", "50% për secilën gjini", "25% për secilën gjini"], c: 1 },
+  { q: "Cila situatë përfaqëson diskriminim të tërthortë gjinor sipas Ligjit Nr. 04/L-054?", a: ["Largimi i hapur i punonjëses pas lajmit për shtatzëni", "Kriteri neutral që pamundëson gratë të aplikojnë për pozitë udhëheqëse", "Shakatë me bazë gjinore nga kolegu", "Mosorganizimi i trajnimeve profesionale"], c: 1 },
+  { q: "Cili është statusi ligjor i refuzimit të riemërimit pas lejes së lindjes?", a: ["I lejuar nëse pozita është mbushur nga dikush tjetër", "Diskriminim i drejtpërdrejtë dhe shkelje e Ligjit të Punës", "I lejuar vetëm nëse punonjësja ka qenë mbi 3 muaj në leje", "I lejuar me vendim të bordit drejtues"], c: 1 },
+  { q: "Cili dokument është i detyrueshëm për institucionet publike sipas Ligjit për Barazi Gjinore?", a: ["Plani Strategjik i Zhvillimit Ekonomik", "Programi i Barazisë Gjinore (PBGj) institucional", "Raporti vjetor i burimeve njerëzore", "Plani i trajnimeve profesionale"], c: 1 },
+  { q: "Kush ka të drejtë të paraqesë ankesë në Avokatin e Popullit për diskriminim gjinor?", a: ["Vetëm personat drejtpërdrejt të prekur", "Vetëm organizatat joqeveritare", "Çdo person fizik ose juridik, duke përfshirë OJQ-të në emër të viktimave", "Vetëm punëdhënësit"], c: 2 },
+  { q: "Cila konventë ndërkombëtare aplikohet përmes Nenit 22 të Kushtetutës së Kosovës?", a: ["Konventa e Gjenevës", "CEDAW – Konventa për Eliminimin e Diskriminimit ndaj Gruas", "Konventa e Vjenës", "Pakti Ndërkombëtar mbi të Drejtat Civile dhe Politike"], c: 1 },
+  { q: "Cili organ adreson stereotipet gjinore në median publike të Kosovës?", a: ["Vetëm gjykatat civile", "ABGj në bashkëpunim me Komisionin e Pavarur të Medias", "Vetëm Ministria e Kulturës", "Vetëm Avokati i Popullit"], c: 1 },
+  { q: "Cili parim është themelor në Ligjin për Barazi Gjinore të Kosovës?", a: ["Barazi vetëm në fushën e arsimit", "Integrimi i perspektivës gjinore (gender mainstreaming) në të gjitha politikat publike", "Përparësia e meshkujve në pozitat udhëheqëse", "Kufizimi i të drejtave gjinore vetëm për sektorin privat"], c: 1 },
+  { q: "Çfarë detyrimi kanë punëdhënësit sipas legjislacionit të Kosovës?", a: ["Të punësojnë vetëm gra për të korrigjuar pabarazitë", "Paga të barabarta për punë të barabartë dhe kushte të njëjta për të dyja gjinitë", "Të ofrojnë trajnime vetëm për punonjëset femra", "Të raportojnë çdo muaj te Ministria e Punës"], c: 1 },
+  { q: "Cili Komision i Kuvendit mbikëqyr zbatimin e legjislacionit për barazi gjinore?", a: ["Komisioni për Çështje Ekonomike", "Komisioni për të Drejtat dhe Interesat e Komuniteteve", "Komisioni për të Drejtat e Njeriut, Barazi Gjinore dhe Peticione", "Komisioni për Buxhet dhe Financa"], c: 2 },
+  { q: "Çfarë ndodh nëse institucioni publik nuk harton Programin e Barazisë Gjinore (PBGj)?", a: ["Nuk ka asnjë pasojë ligjore", "Institucioni mund të gjobitet dhe ABGj ndërhyn për zbatim", "Institucioni mbyllet automatikisht", "Punonjësit individualisht ndëshkohen penalisht"], c: 1 },
+  { q: "Cili instrument përdoret për të matur progresin e barazisë gjinore në Kosovë?", a: ["Indeksi i Çmimeve të Konsumit (CPI)", "Indeksi i Barazisë Gjinore i EIGE-s (European Institute for Gender Equality)", "Indeksi i Zhvillimit Njerëzor (HDI) pa ndarje gjinore", "Raporti vjetor i Bankës Botërore"], c: 1 },
+  { q: "Cili është statusi i diskriminimit gjinor në procedurat gjyqësore sipas Kushtetutës?", a: ["I lejuar në raste të veçanta me vendim gjykate", "Plotësisht i ndaluar – çdo palë ka të drejtë të barabartë aksesi në drejtësi", "I lejuar vetëm në gjykatat e shkallës së parë", "I rregulluar vetëm nga konventat ndërkombëtare, jo ligji vendor"], c: 1 },
+  { q: "Cila është dallimi kryesor midis barazisë formale dhe substanciale gjinore?", a: ["Barazia formale mjafton për të eliminuar diskriminimin gjinor", "Barazia substanciale kërkon masa aktive si kuotat dhe politikat afirmative për rezultate reale", "Barazia formale dhe substanciale janë sinonime në ligjin e Kosovës", "Barazia substanciale zbatohet vetëm në sektorin privat"], c: 1 },
+];
+
+const LABELS = ['A','B','C','D'];
+const TIME_PER_Q = 10;
+let userData = {}, currentQ = 0, score = 0, skipped = 0, wrongCount = 0;
+let timer = null, timeLeft = TIME_PER_Q, answered = false;
+
+function show(id) {
+  ['screen-reg','screen-quiz','screen-result'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s !== id));
+}
+
+function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function validatePhone(p) { return /^[0-9\s\+\-]{6,15}$/.test(p); }
+
+function startQuiz() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const age   = document.getElementById('inp-age').value.trim();
+  const bday  = document.getElementById('inp-bday').value;
+  const city  = document.getElementById('inp-city').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim();
+  const err   = document.getElementById('err-msg');
+
+  if (!name || !age || !bday || !city || !email || !phone) {
+    err.textContent = '⚠️ Ju lutem plotësoni të gjitha fushat!'; err.style.display = 'block'; return;
+  }
+  if (!validateEmail(email)) {
+    err.textContent = '⚠️ Emaili nuk është i vlefshëm!'; err.style.display = 'block'; return;
+  }
+  if (!validatePhone(phone)) {
+    err.textContent = '⚠️ Numri i telefonit nuk është i vlefshëm!'; err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  userData = { name, age, bday, city, email, phone, startTime: new Date().toISOString() };
+  currentQ = 0; score = 0; skipped = 0; wrongCount = 0;
+  show('screen-quiz');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  if (currentQ >= QUESTIONS.length) { showResults(); return; }
+  answered = false; timeLeft = TIME_PER_Q;
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-counter').textContent = `Pyetja ${currentQ+1} / ${QUESTIONS.length}`;
+  document.getElementById('progress-fill').style.width = `${(currentQ/QUESTIONS.length)*100}%`;
+  document.getElementById('question-text').textContent = q.q;
+  const div = document.getElementById('answers');
+  div.innerHTML = '';
+  q.a.forEach((ans, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<span class="answer-label">${LABELS[i]}</span>${ans}`;
+    btn.onclick = () => selectAnswer(i);
+    div.appendChild(btn);
+  });
+  updateTimer();
+  clearInterval(timer);
+  timer = setInterval(tick, 1000);
+}
+
+function tick() {
+  timeLeft--;
+  updateTimer();
+  if (timeLeft <= 0) {
+    clearInterval(timer);
+    if (!answered) {
+      answered = true; skipped++;
+      const btns = document.querySelectorAll('.answer-btn');
+      btns.forEach(b => b.disabled = true);
+      btns[QUESTIONS[currentQ].c].classList.add('correct');
+      setTimeout(() => { currentQ++; loadQuestion(); }, 800);
+    }
+  }
+}
+
+function updateTimer() {
+  const pct = (timeLeft / TIME_PER_Q) * 100;
+  const col  = timeLeft <= 3 ? '#EF4444' : '#6C2BD9';
+  const bg   = timeLeft <= 3 ? '#FEE2E2' : '#EDE9FF';
+  document.getElementById('timer-circle').style.background = `conic-gradient(${col} ${pct}%, ${bg} ${pct}%)`;
+  document.getElementById('timer-num').textContent = timeLeft;
+  document.getElementById('timer-num').style.color = col;
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true; clearInterval(timer);
+  const q = QUESTIONS[currentQ];
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach(b => b.disabled = true);
+  if (idx === q.c) { btns[idx].classList.add('correct'); score++; }
+  else { btns[idx].classList.add('wrong'); btns[q.c].classList.add('correct'); wrongCount++; }
+  setTimeout(() => { currentQ++; loadQuestion(); }, 900);
+}
+
+function showResults() {
+  clearInterval(timer);
+  const pct = Math.round((score/QUESTIONS.length)*100);
+  let title, subtitle;
+  if (pct>=90){ title='🏆 Rezultat i shkëlqyer!'; subtitle='Je kandidat/e i/e fortë për fitues!'; }
+  else if(pct>=70){ title='👏 Shumë mirë!'; subtitle='Njohuri të mira mbi barazinë gjinore.'; }
+  else if(pct>=50){ title='📚 Mirë, por ka hapësirë!'; subtitle='Vazhdo të mësosh rreth temës.'; }
+  else { title='💪 Provo sërish!'; subtitle='Lexo materialin dhe kthehu.'; }
+
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-subtitle').textContent = subtitle;
+  document.getElementById('res-name').textContent = userData.name;
+  document.getElementById('res-age').textContent = userData.age + ' vjeç';
+  document.getElementById('res-city').textContent = userData.city;
+  document.getElementById('res-email').textContent = userData.email;
+  document.getElementById('res-phone').textContent = userData.phone;
+  document.getElementById('res-correct').textContent = score;
+  document.getElementById('res-wrong').textContent = wrongCount;
+  document.getElementById('res-skipped').textContent = skipped;
+
+  const entry = { ...userData, score, wrongCount, skipped, percent: pct, timestamp: new Date().toISOString() };
+  try {
+    const all = JSON.parse(localStorage.getItem('quiz_results')||'[]');
+    all.push(entry); localStorage.setItem('quiz_results', JSON.stringify(all));
+  } catch(e){}
+  show('screen-result');
+}
+</script>
+</body>
+</html>
